@@ -1,0 +1,23 @@
+.App {
+  font-family: sans-serif;
+  text-align: center;
+}
+
+.grid-wrapper {
+  height: 100%;
+  padding-top: 26px;
+  box-sizing: border-box;
+}
+
+.button-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  margin: -3px;
+}
+div.ag-root .ag-cell-focus {
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
+}
