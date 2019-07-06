@@ -4,7 +4,9 @@ import ReactDOM from "react-dom";
 import { AgGridReact } from "ag-grid-react";
 import "ag-grid-community/dist/styles/ag-grid.css";
 import "ag-grid-community/dist/styles/ag-theme-balham.css";
-import "ag-grid-enterprise"
+import "ag-grid-enterprise";
+
+import CustomHeader from "./customHeader.js";
 
 import "./styles.css";
 
@@ -16,61 +18,61 @@ class GridExample extends Component {
       columnDefs: [
         {
           headerName: "Athlete",
-          field: "athlete",
-          width: 150,
-          suppressSizeToFit: true
+          field: "athlete"          
         },
         {
           headerName: "Age",
           field: "age",
-          width: 90,
-          minWidth: 50,
-          maxWidth: 100
         },
         {
           headerName: "Country",
           field: "country",
-          width: 120
         },
         {
           headerName: "Year",
           field: "year",
-          width: 90
         },
         {
           headerName: "Date",
           field: "date",
-          width: 110
         },
         {
           headerName: "Sport",
           field: "sport",
-          width: 110
         },
         {
           headerName: "Gold",
           field: "gold",
-          width: 100
         },
         {
           headerName: "Silver",
           field: "silver",
-          width: 100
         },
         {
           headerName: "Bronze",
           field: "bronze",
-          width: 100
         },
         {
           headerName: "Total",
           field: "total",
-          width: 100
+          suppressSizeToFit: true
         }
       ],
-      defaultColDef: { editable: true },
+      defaultColDef: {
+        editable: true,
+        sortable: true,
+        filterable: true,
+        headerComponentFramework: CustomHeader,
+        headerComponentParams: {
+          menuIcon: "fa-bars"
+        }
+      },
+      suppressRowClickSelection: true,
+      enableRangeSelection: true,
       rowSelection: "multiple",
+      rowDeselection: true,
       clipboardDeliminator: ",",
+
       rowData: []
     };
   }
@@ -97,46 +99,85 @@ class GridExample extends Component {
   onGridReady(params) {
     this.gridApi = params.api;
     this.gridColumnApi = params.columnApi;
-    var that = this;
-    that._fetchData();
-     
-  }
-  onKeyDown(evt) {
-    if (evt.key === "x" && (evt.ctrlKey || evt.metaKey)) {
-        this.gridApi.copySelectedRangeToClipboard();
-
-        const [cellrange] = this.gridApi.getCellRanges()
-        const rowDataUpdated = [];
-
-        for (let index = cellrange.startRow.rowIndex; index <= cellrange.endRow.rowIndex; index++) {
-            let nodeData = this.gridApi.getRowNode(index).data;
-            cellrange.columns.map(column => {
-                nodeData[column.colId] = "";
-            })
-            rowDataUpdated.push(nodeData);
-        }
-        console.log(rowDataUpdated)
-        this.gridApi.updateRowData({update: rowDataUpdated});
-
-        return true;
-    }
-    return false;    
-  }
-  sizeToFit() {
-    console.log(this)
+    this._fetchData();
     this.gridApi.sizeColumnsToFit();
   }
-  autoSizeAll() {
-    var allColumnIds = [];
-    this.gridColumnApi.getAllColumns().forEach(function(column) {
-      allColumnIds.push(column.colId);
-    });
-    this.gridColumnApi.autoSizeColumns(allColumnIds);
+  onKeyUp(evt) {
+    if (evt.key === "Shift") {
+      this.gridApi.clearRangeSelection();
+      this.setState({ suppressRowClickSelection: true });
+      this.setState({ enableRangeSelection: true });
+    }
+  }
+  onKeyDown(evt) {
+    if (evt.shiftKey) {
+      this.gridApi.deselectAll();
+      this.gridApi.clearRangeSelection();
+      this.setState({ enableRangeSelection: false });
+      this.setState({ suppressRowClickSelection: false });
+    }
+    if (evt.key === "x" && (evt.ctrlKey || evt.metaKey)) {
+      this.gridApi.copySelectedRangeToClipboard();
+
+      const [cellrange] = this.gridApi.getCellRanges();
+      const rowDataUpdated = [];
+      if (cellrange !== undefined) {
+        let startRowIndex = cellrange.startRow.rowIndex;
+        let endRowIndex = cellrange.endRow.rowIndex;
+        if (startRowIndex > endRowIndex) {
+          let temp = startRowIndex;
+          startRowIndex = endRowIndex;
+          endRowIndex = temp;
+        }
+        for (let index = startRowIndex; index <= endRowIndex; index++) {
+          let colData = cellrange.columns.map(column => {
+            let nodeData = this.gridApi.getRowNode(index).data;
+            nodeData[column.colId] = "";
+            return nodeData;
+          });
+          rowDataUpdated.push(colData);
+        }
+      } else {
+        this.gridApi.copySelectedRowsToClipboard();
+        const selectedRows = this.gridApi.getSelectedRows();
+        let rowData = selectedRows.map(row => {
+          let obj = row;
+          for (var prop in obj) {
+            if (obj.hasOwnProperty(prop)) {
+              obj[prop] = "";
+            }
+          }
+          console.log(obj);
+          return obj;
+        });
+        rowDataUpdated.push(rowData);
+      }
+      console.log(rowDataUpdated);
+      this.gridApi.updateRowData({ update: rowDataUpdated });
+      return true;
+    }
+    return false;
+  }
+  rowClicked() {
+    if (
+      this.gridApi.getSelectedRows().length &&
+      this.state.suppressRowClickSelection
+    ) {
+      this.gridApi.deselectAll();
+    }
+    return true;
+  }
+  sortChanged() {
+    console.log("--", this.state.suppressRowClickSelection);
   }
   render() {
     return (
       <div style={{ width: "100%", height: "100%" }}>
-        <div className="grid-wrapper">
+        <div
+          className="grid-wrapper"
+          onKeyDown={this.onKeyDown.bind(this)}
+          onKeyUp={this.onKeyUp.bind(this)}
+        >
           <div
             id="myGrid"
             style={{
@@ -145,23 +186,20 @@ class GridExample extends Component {
               width: "100%"
             }}
             className="ag-theme-balham"
-            onKeyDown={this.onKeyDown.bind(this)}
           >
             <AgGridReact
-            columnDefs={this.state.columnDefs}
-            defaultColDef={this.state.defaultColDef}
-            enableRangeSelection={true}
-            rowSelection={this.state.rowSelection}
-            clipboardDeliminator={this.state.clipboardDeliminator}
-            onGridReady={this.onGridReady.bind(this)}
-            rowData={this.state.rowData}
-          />
-    
+              columnDefs={this.state.columnDefs}
+              defaultColDef={this.state.defaultColDef}
+              suppressRowClickSelection={this.state.suppressRowClickSelection}
+              enableRangeSelection={this.state.enableRangeSelection}
+              rowSelection={this.state.rowSelection}
+              clipboardDeliminator={this.state.clipboardDeliminator}
+              onGridReady={this.onGridReady.bind(this)}
+              onRowClicked={this.rowClicked.bind(this)}
+              onSortChanged={this.sortChanged.bind(this)}
+              rowData={this.state.rowData}
+            />
           </div>
-        </div>
-        <div className="button-bar">
-          <button onClick={this.sizeToFit.bind(this)}>Size to Fit</button>
-          <button onClick={this.autoSizeAll.bind(this)}>Auto-Size All</button>
         </div>
       </div>
     );
@@ -172,18 +210,7 @@ class App extends React.Component {
   constructor(props) {
     super(props);
 
-    this.state = {
-      columnDefs: [
-        { headerName: "Make", field: "make" },
-        { headerName: "Model", field: "model" },
-        { headerName: "Price", field: "price" }
-      ],
-      rowData: [
-        { make: "Toyota", model: "Celica", price: 35000 },
-        { make: "Ford", model: "Mondeo", price: 32000 },
-        { make: "Porsche", model: "Boxter", price: 72000 }
-      ]
-    };
+    this.state = {};
   }
 
   render() {
@@ -192,7 +219,7 @@ class App extends React.Component {
         className="ag-theme-balham"
         style={{
           height: "500px",
-          width: "1000px",
+          width: "1400px",
           margin: "auto"
         }}
       >
