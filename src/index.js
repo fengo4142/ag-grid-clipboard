@@ -167,9 +167,6 @@ class GridExample extends Component {
     }
     return true;
   }
-  sortChanged() {
-    console.log("--", this.state.suppressRowClickSelection);
-  }
   render() {
     return (
       <div style={{ width: "100%", height: "100%" }}>
@@ -196,7 +193,6 @@ class GridExample extends Component {
               clipboardDeliminator={this.state.clipboardDeliminator}
               onGridReady={this.onGridReady.bind(this)}
               onRowClicked={this.rowClicked.bind(this)}
-              onSortChanged={this.sortChanged.bind(this)}
               rowData={this.state.rowData}
             />
           </div>

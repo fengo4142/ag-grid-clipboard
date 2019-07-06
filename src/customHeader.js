@@ -30,7 +30,15 @@ export default class CustomHeader extends React.Component {
         "customSortUpLabel " + (this.state.sorted === "asc" ? " active" : "");
       let removeArrowClass =
         "customSortRemoveLabel " + (this.state.sorted === "" ? " active" : "");
-
+      sortElements.push(
+        <div
+          key={`minus${this.props.displayName}`}
+          className={removeArrowClass}
+          onClick={this.onSortRequested.bind(this, "")}
+        >
+          <i className="fa fa-times" />
+        </div>
+      );
       sortElements.push(
         <div
           key={`up${this.props.displayName}`}
@@ -49,15 +57,7 @@ export default class CustomHeader extends React.Component {
           <i className="fa fa-long-arrow-alt-up" />
         </div>
       );
-      sortElements.push(
-        <div
-          key={`minus${this.props.displayName}`}
-          className={removeArrowClass}
-          onClick={this.onSortRequested.bind(this, "")}
-        >
-          <i className="fa fa-times" />
-        </div>
-      );
+      
     }
 
     let menuButton = null;

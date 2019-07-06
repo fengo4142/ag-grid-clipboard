@@ -15,10 +15,12 @@
   left: 0;
   margin: -3px;
 }
-
+.ag-react-container {
+  width: 100%;
+}
 .customHeaderMenuButton {
   float: left;
-  margin: 0 0 0 3px;
+  margin: 0 3px 0 0px;
 }
 
 .customHeaderLabel {
@@ -27,17 +29,17 @@
 }
 
 .customSortDownLabel {
-  float: left;
+  float: right;
   margin: 0 0 0 3px;
 }
 
 .customSortUpLabel {
-  float: left;
+  float: right;
   margin: 0;
 }
 
 .customSortRemoveLabel {
-  float: left;
+  float: right;
   margin: 0 0 0 3px;
   font-size: 11px;
 }
